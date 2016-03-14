@@ -1,0 +1,75 @@
+/*
+Write methods that calculate the surface of a triangle by given:
+Side and an altitude to it; Three sides; Two sides and an angle between them. Use System.Math.
+*/
+using System;
+
+class SurfaceOfTriangle
+{
+    static void S1(int a, int b, double c)
+    {
+        double angle = Math.PI * c / 180.0;
+        double S = a * b * Math.Sin(angle) / 2;
+        Console.WriteLine("The surface of the triangle is {0}", S);
+    }
+    private static void InputS1()
+    {
+        Console.Write("a= ");
+        int a = int.Parse(Console.ReadLine());
+        Console.Write("b= ");
+        int b = int.Parse(Console.ReadLine());
+        Console.Write("<)= ");
+        double c = double.Parse(Console.ReadLine());
+        S1(a, b, c);
+    }
+    private static void S2(int a, int h)
+    {
+        double S = a * h /2.0;
+        Console.WriteLine("The surface of the triangle is {0}", S);
+    }
+    private static void InputS2()
+    {
+        Console.Write("a= ");
+        int a = int.Parse(Console.ReadLine());
+        Console.Write("h= ");
+        int h = int.Parse(Console.ReadLine());
+        S2(a, h);
+    }
+    private static void S3(int a, int b, int c)
+    {
+        double P = (a + b + c) / 2.0;
+        double S = Math.Sqrt(P * (P - a) * (P - b) * (P - c));
+        Console.WriteLine("The surface of the triangle is {0}", S);
+    }
+    private static void InputS3()
+    {
+        Console.Write("a= ");
+        int a = int.Parse(Console.ReadLine());
+        Console.Write("b= ");
+        int b = int.Parse(Console.ReadLine());
+        Console.Write("c= ");
+        int c = int.Parse(Console.ReadLine());
+        S3(a, b, c);
+    }
+   
+
+    static void Main()
+    {
+        Console.WriteLine("                    MENU                        ");
+        Console.WriteLine("+----------------------------------------------+");
+        Console.WriteLine("|1. I have a, b and angle <)                   |");
+        Console.WriteLine("|2. I have a and h                             |");
+        Console.WriteLine("|3. I have a, b and c                          |");
+        Console.WriteLine("+----------------------------------------------+");
+        Console.Write("Choose a number: ");
+        int input = int.Parse(Console.ReadLine());
+        switch (input)
+        {
+            case 1: InputS1(); break;
+            case 2: InputS2(); break;
+            case 3: InputS3(); break;
+            default: Console.WriteLine("You can choose \"1\", \"2\" or \"3\" "); break;
+        }
+
+    }
+}
