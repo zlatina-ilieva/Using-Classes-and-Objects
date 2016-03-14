@@ -1,0 +1,226 @@
+/*
+Write a program that calculates the value of given arithmetical expression. The expression can contain the following elements only:
+Real numbers, e.g. 5, 18.33, 3.14159, 12.6
+Arithmetic operators: +, -, *, / (standard priorities)
+Mathematical functions: ln(x), sqrt(x), pow(x,y)
+Brackets (for changing the default priorities)
+	Examples:
+	(3+5.3) * 2.7 - ln(22) / pow(2.2, -1.7)  ~ 10.6
+	pow(2, 3.14) * (3 - (3 * sqrt(2) - 3.2) + 1.5*0.3)  ~ 21.22
+	Hint: Use the classical "shunting yard" algorithm and "reverse Polish notation".
+*/
+using System;
+using System.Globalization;
+using System.Text;
+using System.Threading;
+
+class Arithmetical
+{
+    private static int Brackets(StringBuilder expression)
+    {
+        int index = 0;
+        int result = 0;
+        while (index < expression.Length && expression[index] != ')')
+        {
+            if (expression[index] == '(')
+            {
+                result = index;
+            }
+            index++;
+        }
+        return result;
+    }
+    private static StringBuilder Exchange(int startIndex, int endIndex, string valueToExchange, StringBuilder expression)
+    {
+        expression.Remove(startIndex, endIndex - startIndex);
+        expression.Insert(startIndex, valueToExchange);
+        return expression;
+    }
+    private static decimal extract(int offset, int start, StringBuilder expression)
+    {
+        int temp = 0;
+        StringBuilder result = new StringBuilder();
+        start += offset;
+        if (expression[start] == '-' || expression[start] == '+')
+        {
+            result.Append(expression[start]);
+            start += offset;
+        }
+
+        while (int.TryParse(expression[start].ToString(), out temp) || expression[start] == '.')
+        {
+            if (offset == -1)
+            {
+                result.Insert(0, expression[start]);
+            }
+            else
+            {
+                result.Append(expression[start]);
+            }
+
+            if (start > 0 && start < expression.Length - 1)
+            {
+                start += offset;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        bool check = expression[start + offset] == '*' || expression[start + offset] == '/' || expression[start + offset] == '+' || expression[start + offset] == '-';
+        if (offset == -1 && ((expression[start] == '+' && check) || (expression[start] == '-' && check)))
+        {
+            result.Insert(0, expression[start]);
+        }
+
+        return decimal.Parse(result.ToString());
+    }
+    private static StringBuilder Calculate(int start, StringBuilder expression)
+    {
+        decimal result = 0;
+        switch (expression[start])
+        {
+            case '-':
+                {
+                    result = extract(-1, start, expression) - extract(1, start, expression);
+                    return Exchange(start - extract(-1, start, expression).ToString().Length, start + extract(1, start, expression).ToString().Length + 1, result.ToString(), expression);
+                }
+
+            case '+':
+                {
+                    result = extract(-1, start, expression) + extract(1, start, expression);
+                    return Exchange(start - extract(-1, start, expression).ToString().Length, start + extract(1, start, expression).ToString().Length + 1, result.ToString(), expression);
+                }
+
+            case '*':
+                {
+                    result = extract(-1, start, expression) * extract(1, start, expression);
+                    return Exchange(start - extract(-1, start, expression).ToString().Length, start + extract(1, start, expression).ToString().Length + 1, result.ToString(), expression);
+                }
+
+            default:
+                {
+                    result = extract(-1, start, expression) / extract(1, start, expression);
+                    return Exchange(start - extract(-1, start, expression).ToString().Length, start + extract(1, start, expression).ToString().Length + 1, result.ToString(), expression);
+                }
+        }
+    }
+    private static StringBuilder CalculateFunction(int start, StringBuilder expression)
+    {
+        CalculateExpression(false, start, expression);
+        decimal result = 0;
+        switch (expression[start - 1])
+        {
+            case 'n':
+                {
+                    result = (decimal)Math.Log((double)extract(1, start, expression));
+                    return Exchange(start - 2, start + extract(1, start, expression).ToString().Length + 2, result.ToString(), expression);
+                }
+            case 't':
+                {
+                    result = (decimal)Math.Sqrt((double)extract(1, start, expression));
+                    return Exchange(start - 4, start + extract(1, start, expression).ToString().Length + 2, result.ToString(), expression);
+                }
+            default:
+                {
+                    int startIndex = start;
+                    while (expression[startIndex] != ',')
+                    {
+                        startIndex++;
+                    }
+                    result = (decimal)Math.Pow((double)extract(-1, startIndex, expression), (double)extract(1, startIndex, expression));
+                    return Exchange(start - 3, start + extract(-1, startIndex, expression).ToString().Length + extract(1, startIndex, expression).ToString().Length + 3, result.ToString(), expression);
+                }
+        }
+    }
+    private static StringBuilder CalculateExpression(bool checkForFunc, int start, StringBuilder expression)
+    {
+        if (checkForFunc)
+        {
+            int mod = 1;
+            if (start == 0)
+            {
+                mod = 0;
+            }
+            if (expression[start - mod] == 'n' || expression[start - mod] == 't' || expression[start - mod] == 'w')
+            {
+                return CalculateFunction(start, expression);
+            }
+        }
+        while (SearchSign('*', start, expression) != 0)
+        {
+            expression = Calculate(SearchSign('*', start, expression), expression);
+        }
+
+        while (SearchSign('/', start, expression) != 0)
+        {
+            expression = Calculate(SearchSign('/', start, expression), expression);
+        }
+
+        while (SearchSign('-', start, expression) != 0 || SearchSign('+', start, expression) != 0)
+        {
+            while (SearchSign('+', start, expression) != 0)
+            {
+                if (SearchSign('-', start, expression) != 0 && (SearchSign('-', start, expression) < SearchSign('+', start, expression)))
+                {
+                    break;
+                }
+
+                expression = Calculate(SearchSign('+', start, expression), expression);
+            }
+            while (SearchSign('-', start, expression) != 0)
+            {
+                expression = Calculate(SearchSign('-', start, expression), expression);
+            }
+        }
+        if (checkForFunc)
+        {
+            expression.Remove(start, 1);
+            while (expression[start] != ')')
+            {
+                start++;
+            }
+
+            expression.Remove(start, 1);
+        }
+
+        return expression;
+    }
+    private static int SearchSign(char sign, int start, StringBuilder expression)
+    {
+        int resultIndex = 0;
+        while (expression[start] != ')' && start < expression.Length)
+        {
+            bool check = expression[start - 1] == '*' || expression[start - 1] == '/' || expression[start - 1] == '+' || expression[start - 1] == '-' || expression[start - 1] == ',' || expression[start - 1] == '(';
+            if (expression[start] == sign && !check)
+            {
+                resultIndex = start;
+                break;
+            }
+            start++;
+        }
+        return resultIndex;
+    }
+    private static void Main()
+    {
+        Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+        string items = "(3 + 5.3)*2.7-ln(22)/pow(2.2, -1.7)";
+        StringBuilder expression = new StringBuilder();
+        expression.Append('(', 2);
+        foreach (var item in items)
+        {
+            if (item != ' ')
+            {
+                expression.Append(item);
+            }
+        }
+        expression.Append(')', 2);
+        do
+        {
+            expression = CalculateExpression(true, Brackets(expression), expression);
+        }
+        while (Brackets(expression) != 0);
+        Console.WriteLine("Result is: {0}", expression);
+    }
+}
