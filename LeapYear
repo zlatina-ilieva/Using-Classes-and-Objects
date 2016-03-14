@@ -1,0 +1,15 @@
+/*
+Write a program that reads a year from the console and checks whether it is a leap. Use DateTime.
+*/
+using System;
+
+class LeapYear
+{
+    static void Main()
+    {
+        Console.WriteLine("Enter a year:");
+        short year = short.Parse(Console.ReadLine());
+        bool isLeap = DateTime.IsLeapYear(year);
+        Console.WriteLine("The {0} year is leap: {1}", year, isLeap);
+    }
+}
